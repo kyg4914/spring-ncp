@@ -1,0 +1,54 @@
+name: Deploy to NCP
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH key
+        run: |
+          set -x
+          mkdir -p ~/.ssh
+          echo "${{ secrets.BASTION_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.BASTION_HOST }} >> ~/.ssh/known_hosts || echo "ssh-keyscan failed"
+          ls -al ~/.ssh
+          cat ~/.ssh/known_hosts
+          ssh -o StrictHostKeyChecking=no ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} "echo SSH connection success" || echo "SSH connection failed"
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build Spring Boot app
+        run: |
+          set -x
+          ./gradlew build
+
+      - name: List JARs built (debug)
+        run: |
+          set -x
+          ls -lh build/libs
+
+      - name: Copy JAR to bastion server
+        run: |
+          set -x
+          echo "Copying JAR to bastion server..."
+          scp build/libs/*SNAPSHOT.jar ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }}:/tmp/app.jar
+
+      - name: SSH into bastion and move JAR to private server
+        run: |
+          set -x
+          echo "SSH into bastion host and run commands..."
+          ssh ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} << 'EOF'
+            echo "Copying app.jar to private server..."
+            scp /tmp/app.jar root@10.1.2.6:/root/app.jar
+            echo "Running deploy.sh on private server..."
+            ssh root@10.1.2.6 'bash /root/deploy.sh'
+          EOF
