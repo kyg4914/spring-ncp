@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <h2 class="mb-4">영화 정보 수정</h2>
+    <form th:action="@{/movies/{movieId}(movieId=${movie.movieId})}" method="post">
+        <div class="mb-3">
+            <label for="title" class="form-label">영화 제목</label>
+            <input type="text" class="form-control" name="title" th:value="${movie.title}" id="title" readonly required>
+        </div>
+
+        <div class="mb-3">
+            <label for="releaseDate" class="form-label">개봉일자</label>
+            <input type="date" class="form-control" name="release" th:value="${movie.release}" id="releaseDate" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="director" class="form-label">감독</label>
+            <input type="text" class="form-control" name="director" th:value="${movie.director}" id="director">
+        </div>
+
+        <div class="mb-3">
+            <label for="synopsis" class="form-label">시놉시스</label>
+            <textarea class="form-control" id="synopsis" name="synopsis" th:text="${movie.synopsis}" rows="4"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">수정하기</button>
+    </form>
+</div>
+</body>
+</html>
